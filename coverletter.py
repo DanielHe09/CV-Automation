@@ -16,6 +16,7 @@ TEMPLATE = BASE_DIR / "Cover Letter Template.docx"
 OUTPUT_DIR = Path.home() / "Downloads"
 DEFAULT_ROLE = "Software Engineering Internship"
 DEFAULT_ADJECTIVE = "innovative"
+SOFFICE = "/Applications/LibreOffice.app/Contents/MacOS/soffice"
 
 
 def fill_placeholders(document, values):
@@ -27,21 +28,26 @@ def fill_placeholders(document, values):
 
 
 def docx_to_pdf(docx_path, pdf_path):
-    script = f'''
-    tell application "Microsoft Word"
-        set wasRunning to running
-        open POSIX file "{docx_path}"
-        set theDoc to active document
-        save as theDoc file name POSIX file "{pdf_path}" file format format PDF
-        close theDoc saving no
-        if not wasRunning then quit
-    end tell
-    '''
+    out_dir = pdf_path.parent
     result = subprocess.run(
-        ["osascript", "-e", script], capture_output=True, text=True
+        [
+            SOFFICE,
+            "--headless",
+            "--convert-to",
+            "pdf",
+            "--outdir",
+            str(out_dir),
+            str(docx_path),
+        ],
+        capture_output=True,
+        text=True,
     )
     if result.returncode != 0:
         sys.exit(f"PDF export failed:\n{result.stderr.strip()}")
+
+    # LibreOffice names the output after the input file; rename to our target name.
+    produced = out_dir / (docx_path.stem + ".pdf")
+    produced.replace(pdf_path)
 
 
 def safe_filename(text):
@@ -96,7 +102,7 @@ def main():
     )
 
     OUTPUT_DIR.mkdir(exist_ok=True)
-    pdf_path = OUTPUT_DIR / f"Daniel He Cover Letter - {safe_filename(args.company)}.pdf"
+    pdf_path = OUTPUT_DIR / f"Daniel He {safe_filename(args.company)} Cover Letter.pdf"
 
     with tempfile.TemporaryDirectory() as tmp:
         temp_docx = Path(tmp) / "letter.docx"
