@@ -55,7 +55,27 @@ def safe_filename(text):
 
 
 def main():
-    parser = argparse.ArgumentParser(description=__doc__)
+    if len(sys.argv) > 1 and sys.argv[1] == "help":
+        sys.argv[1] = "--help"
+
+    parser = argparse.ArgumentParser(
+        description=__doc__,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog=f"""examples:
+  coverletter "Shopify"
+  coverletter "Stripe" --adj "fast-paced"
+  coverletter "Figma" --role "Product Engineering Intern" --adj "design-driven"
+  coverletter "Notion" "Backend Intern" "collaborative"
+
+defaults:
+  role: "{DEFAULT_ROLE}"
+  adjective: "{DEFAULT_ADJECTIVE}"
+  date: today's date
+
+output:
+  PDF is saved to ~/Downloads as "Daniel He <Company> Cover Letter.pdf"
+""",
+    )
     parser.add_argument("company", help='Company name, e.g. "Shopify"')
     parser.add_argument(
         "role",
